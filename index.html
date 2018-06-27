@@ -7,10 +7,10 @@
 
 <script>
     $(function() {
-        var s3_client = function() {
+        var s3_client = function () {
             AWS.config.region = "us-east-1";
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({IdentityPoolId: "us-east-1:931d3d0b-6093-4852-b65c-9676aa85e17c"});
-            AWS.config.credentials.get(function(err) {
+            AWS.config.credentials.get(function (err) {
                 if (!err) {
                     console.log("Cognito Identify Id: " + AWS.config.credentials.identityId);
                 }
@@ -18,19 +18,19 @@
             return new AWS.S3({params: {Bucket: "photouploaderforet"}});
         };
 
-        $("#apply-upload").click(function() {
+        $("#apply-upload").click(function () {
             var file = $("#upload-file").prop("files")[0];
             var timestamp = new Date().getTime();
             var filename = "file" + timestamp + ".jpg";
             s3_client().putObject({Key: filename, ContentType: file.type, Body: file, ACL: "public-read"},
-                function(err, data){
+                function (err, data) {
                     // if failed, alert
-                    if(data !== null){
+                    if (data !== null) {
                         alert("アップロード成功!");
                     } else {
                         alert("アップロード失敗.");
                     }
                 });
         });
-    )};
+    });
 </script>
