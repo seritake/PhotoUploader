@@ -21,7 +21,7 @@
         $("#apply-upload").click(function () {
             var file = $("#upload-file").prop("files")[0];
             var timestamp = new Date().getTime();
-            var filename = "file" + timestamp + ".jpg";
+            var filename = "file" + timestamp + ".png";
             s3_client().putObject({Key: filename, ContentType: file.type, Body: file, ACL: "public-read"},
                 function (err, data) {
                     // if failed, alert
