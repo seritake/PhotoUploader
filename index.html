@@ -111,7 +111,7 @@
         $("#apply-upload").click(function () {
             cropper.getCroppedCanvas().toBlob(function (blob) {
                 var timestamp = new Date().getTime();
-                var filename = "file" + timestamp + ".jpg";
+                var filename = timestamp + ".jpg";
                 var file = new File([blob], filename);
                 s3_client().putObject({Key: "photos/" + filename, ContentType: file.type, Body: file, ACL: "public-read"},
                     function (err, data) {
