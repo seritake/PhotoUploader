@@ -1,12 +1,102 @@
-<script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="//sdk.amazonaws.com/js/aws-sdk-2.1.34.min.js"></script>
+<!DOCTYPE html>
+<meta http-equiv="content-type" charset="utf-8">
+<html lang="ja">
+<head>
+    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="//sdk.amazonaws.com/js/aws-sdk-2.1.34.min.js"></script>
+    <script src="node_modules/cropperjs/dist/cropper.js"></script>
+    <link href="node_modules/cropperjs/dist/cropper.css" rel="stylesheet">
+    <script src="node_modules/jquery-cropper/dist/jquery-cropper.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div style="width: 500px">
+    <form enctype="multipart/form-data" method="post">
+        <input type="file" name="upload" accept="image/*" id="upload-file">
+    </form>
+    <a href="javascript:void(0)" id="apply-upload">upload</a>
+</div>
 
+<div>
+    <canvas id="canvas" width="0" height="0"></canvas>
+</div>
 
-<input type="file" name="upload" id="upload-file">
-<a href="javascript:void(0)" id="apply-upload">アップロード</a>
+<div>
+    <canvas id="display-canvas" width="200" height="200"></canvas>
+</div>
 
 <script>
-    $(function() {
+    $(function () {
+        var file = null;
+        var blob = null;
+        var displaycanvas = document.getElementById('display-canvas').getContext('2d');
+        var cropper = null;
+
+        const THUMBNAIL_WIDTH = 700;
+        const THUMBNAIL_HEIGHT = 700;
+
+        $('input[type=file]').change(function () {
+            file = $(this).prop('files')[0];
+
+            if (file.type != 'image/jpeg' && file.type != 'image/png') {
+                file = null;
+                bolb = null;
+                return;
+            }
+
+            var image = new Image();
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                image.onload = function () {
+                    var width, height;
+                    if (image.width > image.height) {
+                        var ratio = image.height / image.width;
+                        width = THUMBNAIL_WIDTH;
+                        height = THUMBNAIL_WIDTH * ratio;
+                    } else {
+                        // 縦長の画像は縦のサイズを指定値にあわせる
+                        var ratio = image.width / image.height;
+                        width = THUMBNAIL_HEIGHT * ratio;
+                        height = THUMBNAIL_HEIGHT;
+                    }
+
+                    var canvas = $("#canvas").attr('width', width).attr('height', height);
+                    var ctx = canvas[0].getContext('2d');
+
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, width, height);
+
+                    canvas.cropper({
+                        aspectRatio: 1,
+                        crop: function (event) {
+                            console.log("detail " + event.detail.x);
+                            console.log(event.detail.y);
+                            console.log(event.detail.width);
+                        }
+                    });
+
+                    cropper = canvas.data('cropper');
+
+                    /*var base64 = canvas.get(0).toDataURL('image/jpeg');
+                    var barr, bin, i, len;
+                    bin = atob(base64.split('base64,')[1]);
+                    len = bin.length;
+                    barr = new Uint8Array(len);
+                    i = 0;
+                    while (i < len) {
+                        barr[i] = bin.charCodeAt(i);
+                        i++;
+                    }
+                    blob = new Blob([barr], {type: 'image/jpeg'});
+                    console.log(blob);
+                    */
+                };
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+
         var s3_client = function () {
             AWS.config.region = "us-east-1";
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({IdentityPoolId: "us-east-1:931d3d0b-6093-4852-b65c-9676aa85e17c"});
@@ -19,18 +109,25 @@
         };
 
         $("#apply-upload").click(function () {
-            var file = $("#upload-file").prop("files")[0];
-            var timestamp = new Date().getTime();
-            var filename = "file" + timestamp + ".jpg";
-            s3_client().putObject({Key: "photos/" + filename, ContentType: file.type, Body: file, ACL: "public-read"},
-                function (err, data) {
-                    // if failed, alert
-                    if (data !== null) {
-                        alert("アップロード成功!");
-                    } else {
-                        alert("アップロード失敗.");
-                    }
-                });
+            cropper.getCroppedCanvas().toBlob(function (blob) {
+                var timestamp = new Date().getTime();
+                var filename = "file" + timestamp + ".jpg";
+                var file = new File([blob], filename);
+                s3_client().putObject({Key: "photos/" + filename, ContentType: file.type, Body: file, ACL: "public-read"},
+                    function (err, data) {
+                        // if failed, alert
+                        if (data !== null) {
+                            alert("アップロード成功!");
+                        } else {
+                            alert("アップロード失敗.");
+                        }
+                    });
+
+
+            });
+
         });
     });
 </script>
+</body>
+</html>

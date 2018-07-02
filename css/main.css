@@ -1,0 +1,10 @@
+canvas {
+    max-width: 100%;
+}
+
+.display-canvas {
+    max-width: 100%;
+    overflow: hidden;
+    width: 200px;
+    height: 200px;
+}
