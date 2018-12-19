@@ -105,7 +105,7 @@
                     console.log("Cognito Identify Id: " + AWS.config.credentials.identityId);
                 }
             });
-            return new AWS.S3({params: {Bucket: "photouploaderforet"}});
+            return new AWS.S3({params: {Bucket: "for-qiita-uploader"}});
         };
 
         $("#apply-upload").click(function () {
